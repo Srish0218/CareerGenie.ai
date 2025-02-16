@@ -3,7 +3,6 @@ import streamlit as st
 import json
 import re
 from io import BytesIO
-
 from utils.career_advisor import analyze_resume_with_ai
 from utils.resume_improver import improve_resume
 from utils.job_scraper import LinkedInScraper, LinkedInSkillScraper

@@ -1,6 +1,5 @@
 import streamlit as st
 from langchain_google_genai import ChatGoogleGenerativeAI
-from langchain.schema import HumanMessage
 import json
 
 gemini_api_key = st.secrets["GEMINI_API_KEY"]

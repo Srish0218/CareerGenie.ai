@@ -1,6 +1,5 @@
 import fitz  # PyMuPDF
 import docx
-from io import BytesIO
 
 
 def extract_resume_text(file_obj, file_extension):
