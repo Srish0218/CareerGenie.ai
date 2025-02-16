@@ -4,3 +4,4 @@ pdfplumber
 python-docx
 beautifulsoup4
 requests
+langchain
