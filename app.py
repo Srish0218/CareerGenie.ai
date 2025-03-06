@@ -2,7 +2,6 @@ import json
 import re
 from io import BytesIO
 
-import spacy
 import streamlit as st
 
 from utils.career_advisor import analyze_resume_with_ai
@@ -19,7 +18,6 @@ st.set_page_config(
 )
 
 # Load NLP model
-nlp = spacy.load("en_core_web_sm")
 
 st.title("📄 CareerGenie - AI Resume Analyzer")
 uploaded_file = st.file_uploader("Upload Resume", type=["pdf", "docx"])
