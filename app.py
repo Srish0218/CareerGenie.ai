@@ -1,22 +1,12 @@
 import json
 import re
 from io import BytesIO
+
 import streamlit as st
 from utils.career_advisor import analyze_resume_with_ai, display_json
 from utils.job_scraper import LinkedInSkillScraper, LinkedInScraper
 from utils.resume_improver import improve_resume
 from utils.resume_parser import extract_resume_text
-from pymongo import MongoClient
-
-# MongoDB connection setup
-MONGO_URI = st.secrets['MONGO_URI']  # Change this if using MongoDB Atlas
-DB_NAME = st.secrets['DB_NAME']
-COLLECTION_NAME = st.secrets['COLLECTION_NAME']
-
-# Connect to MongoDB
-client = MongoClient(MONGO_URI)
-db = client[DB_NAME]
-collection = db[COLLECTION_NAME]
 
 # Streamlit Configuration
 st.set_page_config(
@@ -29,12 +19,6 @@ st.set_page_config(
 # Load NLP model
 
 st.title("📄 CareerGenie - AI Resume Analyzer")
-try:
-    client.server_info()  # Check connection
-    st.popover("Connected to MongoDB!")
-except Exception as e:
-    st.popover(f"MongoDB Connection Error: {e}")
-
 uploaded_file = st.file_uploader("Upload Resume", type=["pdf", "docx"])
 
 if uploaded_file:
@@ -44,11 +28,7 @@ if uploaded_file:
 
     st.write(f"📂 **Uploaded File:** {file_name}")
     if st.button("Analyze Resume 📜"):
-
         with st.spinner("Analyzing..."):
-            collection.insert_one({
-                "name": file_name,
-            })
             ai_response = analyze_resume_with_ai(resume_text)
 
         try:
