@@ -4,6 +4,7 @@ import json
 
 gemini_api_key = st.secrets["GEMINI_API_KEY"]
 
+
 def display_json(data, indent=0):
     """Recursively display JSON keys and values using Streamlit."""
     for key, value in data.items():
@@ -16,8 +17,6 @@ def display_json(data, indent=0):
                 st.write(" " * (indent + 4) + f"- {item}")
         else:
             st.write(" " * (indent + 4) + f"{value}")
-
-
 
 
 def analyze_resume_with_ai(resume_text):
