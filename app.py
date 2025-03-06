@@ -45,11 +45,12 @@ if uploaded_file:
             career_info = parsed_response.get("CareerInfo", "Career information not found.")
             jobs = parsed_response.get("JobTitle", [])
             skills = parsed_response.get("Skills", [])
+            ExperienceLevel = parsed_response.get("ExperienceLevel", [])
 
-            career_tab, job_tab, skill_tab, resume_improvement, country_search, city_search, experience_search = st.tabs(
+            career_tab, job_tab, skill_tab, resume_improvement, job_outside_india, experience_search = st.tabs(
                 [
                     "🎯 Career Information", "🔎 Job Search", "🔧 Skill Search", "📌 Resume Improvement",
-                    "🌍 Search by Country", "🏙️ Search by City", "💼 Search by Experience"
+                    "🌍 Jobs Outside India", "💼 Search by Experience"
                 ])
 
             with career_tab:
@@ -57,12 +58,12 @@ if uploaded_file:
                 st.markdown(career_info)
 
             with job_tab:
-                st.subheader("🔎 Searching Jobs for You...")
+                st.subheader("🔎 Job Search (India)")
                 if jobs:
                     for job in jobs:
                         st.markdown(f"### 🔹 {job}")
                         linkedin_scraper = LinkedInScraper([job])
-                        linkedin_results = linkedin_scraper.fetch_jobs()
+                        linkedin_results = linkedin_scraper.fetch_jobs_OutsideIndia()
                         with st.expander(f"📌 LinkedIn Jobs for {job}"):
                             if linkedin_results and linkedin_results[0].get("jobs"):
                                 for job_item in linkedin_results[0]["jobs"]:
@@ -77,7 +78,7 @@ if uploaded_file:
                     st.warning("No job recommendations found.")
 
             with skill_tab:
-                st.subheader("🔧 Skill-Based Search")
+                st.subheader("🔧 Skill-Based Search (India)")
                 if skills:
                     for skill in skills:
                         st.markdown(f"### 🔹 {skill}")
@@ -100,79 +101,67 @@ if uploaded_file:
                 st.subheader("📌 Resume Improvement Suggestions")
                 st.markdown(improve_resume(resume_text))
 
-            # with country_search:
-            #     st.subheader("🌍 Search Jobs by Country")
-            #     country = st.text_input("Enter Country")
-            #     if st.button("Search Jobs by Country"):
-            #         linkedin_scraper = LinkedInScraper([], country=country)
-            #         linkedin_results = linkedin_scraper.fetch_jobs()
-            #         if linkedin_results and linkedin_results[0].get("jobs"):
-            #             for job_item in linkedin_results[0]["jobs"]:
-            #                 st.markdown(
-            #                     f"- **[{job_item['title']}]({job_item['link']})** at *{job_item['company']}* "
-            #                     f"({job_item['location']}) - ⏳ {job_item['posted']}"
-            #                 )
-            #         else:
-            #             st.warning("No jobs found for this country.")
-            #
-            # with city_search:
-            #     st.subheader("🏙️ Search Jobs by City")
-            #     city = st.text_input("Enter City")
-            #     if st.button("Search Jobs by City"):
-            #         linkedin_scraper = LinkedInScraper([], location=city)
-            #         linkedin_results = linkedin_scraper.fetch_jobs()
-            #         if linkedin_results and linkedin_results[0].get("jobs"):
-            #             for job_item in linkedin_results[0]["jobs"]:
-            #                 st.markdown(
-            #                     f"- **[{job_item['title']}]({job_item['link']})** at *{job_item['company']}* "
-            #                     f"({job_item['location']}) - ⏳ {job_item['posted']}"
-            #                 )
-            #         else:
-            #             st.warning("No jobs found for this city.")
-            #
-            # with experience_search:
-            #     st.subheader("💼 Search Jobs by Experience Level and Job Profile")
-            #     # Experience level options with assigned numbers
-            #     experience_levels = {
-            #         1: "Internship",
-            #         2: "Entry level",
-            #         3: "Associate",
-            #         4: "Mid-Senior level",
-            #         5: "Director",
-            #         6: "Executive"
-            #     }
-            #
-            #     # Multiselect dropdown for selecting experience levels
-            #     selected_numbers = st.multiselect("Select Experience Levels", options=list(experience_levels.keys()),
-            #                                      format_func=lambda x: experience_levels[x])
-            #     # Display selected numbers in the required format
-            #     if selected_numbers:
-            #         Exp_preference = f"&f_E={'%2C'.join(map(str, selected_numbers))}"
-            #
-            #         # st.write("You selected:", "&f_E=", "%2C".join(map(str, selected_numbers)))
-            #     else:
-            #         Exp_preference = ""
-            #         st.error("No Experience Preference Selected! ")
-            #     # Button to trigger job search
-            #     if st.button("Search for Job Profiles with Preferred Experience"):
-            #         if selected_numbers:
-            #             for job in jobs:
-            #                 st.markdown(f"### 🔹 {job}")
-            #                 linkedin_scraper = LinkedInScraper([job])
-            #                 linkedin_results = linkedin_scraper.fetch_jobs(Exp_preference)
-            #
-            #                 with st.expander(f"📌 LinkedIn Jobs for {job}"):
-            #                     if linkedin_results and linkedin_results[0].get("jobs"):
-            #                         for job_item in linkedin_results[0]["jobs"]:
-            #                             st.markdown(
-            #                                 f"- **[{job_item['title']}]({job_item['link']})** at *{job_item['company']}* "
-            #                                 f"({job_item['location']}) - ⏳ {job_item['posted']}"
-            #                             )
-            #                         st.markdown(f"[🔗 View More LinkedIn Jobs]({linkedin_results[0]['apply_link']})")
-            #                     else:
-            #                         st.warning(f"No jobs found for {job} on LinkedIn.")
-            #         else:
-            #             st.error("Please select at least one experience level.")
+            with job_outside_india:
+                st.subheader("🌍 Jobs Outside India")
+                if jobs:
+                    for job in jobs:
+                        st.markdown(f"### 🔹 {job}")
+                        linkedin_scraper = LinkedInScraper([job])
+                        linkedin_results = linkedin_scraper.fetch_jobs()
+                        with st.expander(f"📌 LinkedIn Jobs for {job}"):
+                            if linkedin_results and linkedin_results[0].get("jobs"):
+                                for job_item in linkedin_results[0]["jobs"]:
+                                    st.markdown(
+                                        f"- **[{job_item['title']}]({job_item['link']})** at *{job_item['company']}* "
+                                        f"({job_item['location']}) - ⏳ {job_item['posted']}"
+                                    )
+                                st.markdown(f"[🔗 View More LinkedIn Jobs]({linkedin_results[0]['apply_link']})")
+                            else:
+                                st.warning(f"No jobs found for {job} on LinkedIn.")
+                else:
+                    st.warning("No job recommendations found.")
+
+            with experience_search:
+                st.subheader("💼 Search Jobs by Experience Level and Job Profile")
+                st.info(ExperienceLevel)
+
+                # Experience level mapping
+                experience_levels = {
+                    "Internship": 1,
+                    "Entry level": 2,
+                    "Associate": 3,
+                    "Mid-Senior level": 4,
+                    "Director": 5,
+                    "Executive": 6
+                }
+
+                # Convert selected experience levels to corresponding numbers
+                ExperienceLevels = [experience_levels[level] for level in ExperienceLevel if level in experience_levels]
+
+                # Error handling if no experience level is selected
+                if not ExperienceLevels:
+                    st.error("No Experience Preference Selected!")
+                else:
+                    for job in jobs:
+                        st.markdown(f"### 🔹 {job}")
+
+                        for exp_level, exp_code in experience_levels.items():
+                            if exp_code in ExperienceLevels:
+                                exp_pref = f"&f_E={exp_code}"  # Unique experience level filter
+                                linkedin_scraper = LinkedInScraper([job])
+                                linkedin_results = linkedin_scraper.fetch_jobs(exp_pref)
+
+                                with st.expander(f"📌 LinkedIn Jobs for {job} ({exp_level})"):
+                                    if linkedin_results and linkedin_results[0].get("jobs"):
+                                        for job_item in linkedin_results[0]["jobs"]:
+                                            st.markdown(
+                                                f"- **[{job_item['title']}]({job_item['link']})** at *{job_item['company']}* "
+                                                f"({job_item['location']}) - ⏳ {job_item['posted']}"
+                                            )
+                                        st.markdown(f"[🔗 View More LinkedIn Jobs]({linkedin_results[0]['apply_link']})")
+                                    else:
+                                        st.warning(f"No jobs found for {job} at {exp_level} level.")
+
 
         except json.JSONDecodeError as e:
             st.error(f"⚠️ JSON parsing error: {str(e)}")
