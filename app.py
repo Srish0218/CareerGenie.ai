@@ -29,6 +29,12 @@ st.set_page_config(
 # Load NLP model
 
 st.title("📄 CareerGenie - AI Resume Analyzer")
+try:
+    client.server_info()  # Check connection
+    st.popover("Connected to MongoDB!")
+except Exception as e:
+    st.popover(f"MongoDB Connection Error: {e}")
+
 uploaded_file = st.file_uploader("Upload Resume", type=["pdf", "docx"])
 
 if uploaded_file:
@@ -38,10 +44,11 @@ if uploaded_file:
 
     st.write(f"📂 **Uploaded File:** {file_name}")
     if st.button("Analyze Resume 📜"):
-        collection.insert_one({
-            "name": file_name,
-        })
+
         with st.spinner("Analyzing..."):
+            collection.insert_one({
+                "name": file_name,
+            })
             ai_response = analyze_resume_with_ai(resume_text)
 
         try:
