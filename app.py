@@ -1,13 +1,22 @@
 import json
 import re
 from io import BytesIO
-
 import streamlit as st
-
 from utils.career_advisor import analyze_resume_with_ai, display_json
 from utils.job_scraper import LinkedInSkillScraper, LinkedInScraper
 from utils.resume_improver import improve_resume
 from utils.resume_parser import extract_resume_text
+from pymongo import MongoClient
+
+# MongoDB connection setup
+MONGO_URI = st.secrets['MONGO_URI']  # Change this if using MongoDB Atlas
+DB_NAME = st.secrets['DB_NAME']
+COLLECTION_NAME = st.secrets['COLLECTION_NAME']
+
+# Connect to MongoDB
+client = MongoClient(MONGO_URI)
+db = client[DB_NAME]
+collection = db[COLLECTION_NAME]
 
 # Streamlit Configuration
 st.set_page_config(
@@ -29,6 +38,9 @@ if uploaded_file:
 
     st.write(f"📂 **Uploaded File:** {file_name}")
     if st.button("Analyze Resume 📜"):
+        collection.insert_one({
+            "name": file_name,
+        })
         with st.spinner("Analyzing..."):
             ai_response = analyze_resume_with_ai(resume_text)
 

@@ -1,12 +1,13 @@
-streamlit
+streamlit~=1.42.0
 langchain-google-genai
 pdfplumber
 python-docx
-beautifulsoup4
-requests
+beautifulsoup4~=4.8.2
+requests~=2.32.3
 langchain
 pymupdf  # Required for 'fitz
 google-generativeai
 beautifulsoup4
 requests
 lxml
+pymongo~=4.11.2
