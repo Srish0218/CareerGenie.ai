@@ -4,7 +4,7 @@ from io import BytesIO
 
 import streamlit as st
 
-from utils.career_advisor import analyze_resume_with_ai
+from utils.career_advisor import analyze_resume_with_ai, display_json
 from utils.job_scraper import LinkedInSkillScraper, LinkedInScraper
 from utils.resume_improver import improve_resume
 from utils.resume_parser import extract_resume_text
@@ -45,15 +45,18 @@ if uploaded_file:
             skills = parsed_response.get("Skills", [])
             ExperienceLevel = parsed_response.get("ExperienceLevel", [])
 
-            career_tab, job_tab, skill_tab, resume_improvement, job_outside_india, experience_search = st.tabs(
+            career_tab, job_tab, skill_tab, resume_improvement, job_outside_india, experience_search, early_applicant = st.tabs(
                 [
                     "🎯 Career Information", "🔎 Job Search", "🔧 Skill Search", "📌 Resume Improvement",
-                    "🌍 Jobs Outside India", "💼 Search by Experience"
+                    "🌍 Jobs Outside India", "💼 Search by Experience", "Be an Early Applicant"
                 ])
 
             with career_tab:
                 st.subheader("🎯 Career Information")
-                st.markdown(career_info)
+                if isinstance(career_info, dict):
+                    display_json(career_info)  # Directly print within function
+                else:
+                    st.write(career_info)  # Print string normally
 
             with job_tab:
                 st.subheader("🔎 Job Search (India)")
@@ -61,7 +64,7 @@ if uploaded_file:
                     for job in jobs:
                         st.markdown(f"### 🔹 {job}")
                         linkedin_scraper = LinkedInScraper([job])
-                        linkedin_results = linkedin_scraper.fetch_jobs_OutsideIndia()
+                        linkedin_results = linkedin_scraper.fetch_jobs()
                         with st.expander(f"📌 LinkedIn Jobs for {job}"):
                             if linkedin_results and linkedin_results[0].get("jobs"):
                                 for job_item in linkedin_results[0]["jobs"]:
@@ -105,7 +108,7 @@ if uploaded_file:
                     for job in jobs:
                         st.markdown(f"### 🔹 {job}")
                         linkedin_scraper = LinkedInScraper([job])
-                        linkedin_results = linkedin_scraper.fetch_jobs()
+                        linkedin_results = linkedin_scraper.fetch_jobs_OutsideIndia()
                         with st.expander(f"📌 LinkedIn Jobs for {job}"):
                             if linkedin_results and linkedin_results[0].get("jobs"):
                                 for job_item in linkedin_results[0]["jobs"]:
@@ -159,6 +162,28 @@ if uploaded_file:
                                         st.markdown(f"[🔗 View More LinkedIn Jobs]({linkedin_results[0]['apply_link']})")
                                     else:
                                         st.warning(f"No jobs found for {job} at {exp_level} level.")
+
+            with early_applicant:
+                if jobs:
+                    for job in jobs:
+                        st.markdown(f"### 🔹 {job}")
+                        linkedin_scraper = LinkedInScraper([job])
+                        linkedin_results = linkedin_scraper.fetch_jobs_for_Early_Applicants()
+                        with st.expander(f"📌 LinkedIn Jobs for {job}"):
+                            if linkedin_results and linkedin_results[0].get("jobs"):
+                                for job_item in linkedin_results[0]["jobs"]:
+                                    st.markdown(
+                                        f"- **[{job_item['title']}]({job_item['link']})** at *{job_item['company']}* "
+                                        f"({job_item['location']}) - ⏳ {job_item['posted']}"
+                                    )
+                                st.markdown(f"[🔗 View More LinkedIn Jobs]({linkedin_results[0]['apply_link']})")
+                            else:
+                                st.warning(f"No jobs found for {job} on LinkedIn.")
+                else:
+                    st.warning("No job recommendations found.")
+
+
+
 
 
         except json.JSONDecodeError as e:

@@ -4,6 +4,21 @@ import json
 
 gemini_api_key = st.secrets["GEMINI_API_KEY"]
 
+def display_json(data, indent=0):
+    """Recursively display JSON keys and values using Streamlit."""
+    for key, value in data.items():
+        st.write(" " * indent + f"**{key}:**")  # Bold key for Markdown
+
+        if isinstance(value, dict):
+            display_json(value, indent + 4)  # Recursive call for nested dictionaries
+        elif isinstance(value, list):
+            for item in value:
+                st.write(" " * (indent + 4) + f"- {item}")
+        else:
+            st.write(" " * (indent + 4) + f"{value}")
+
+
+
 
 def analyze_resume_with_ai(resume_text):
     """Analyze resume using Gemini AI to suggest career options."""

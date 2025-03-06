@@ -1,7 +1,7 @@
 from urllib.parse import quote_plus
-
 import requests
 from bs4 import BeautifulSoup
+
 
 class JobScraper:
     """Base class for job scrapers."""
@@ -17,19 +17,28 @@ class JobScraper:
 
 class LinkedInScraper(JobScraper):
     """Scraper for LinkedIn jobs."""
-    BASE_URL_jobs = "https://www.linkedin.com/jobs/search/?keywords="
-    BASE_URL_people = "https://www.linkedin.com/search/results/people/?keywords="
+    BASE_URL_JOBS = "https://www.linkedin.com/jobs/search/?"
+    BASE_URL_PEOPLE = "https://www.linkedin.com/search/results/people/?keywords="
 
-    def fetch_jobs(self, Exp_Level=None):
-        """Scrape LinkedIn job postings only in India."""
+    def fetch_jobs(self, Exp_Level=None, geo_id="102713980", EarlyApp=False):
+        """
+        Scrape LinkedIn job postings.
+        :param EarlyApp:
+        :param Exp_Level: Experience level filter (optional)
+        :param geo_id: LinkedIn Geo ID (default: India)
+        """
         all_jobs = []
         session = requests.Session()
-        india_geo_id = "102713980"  # LinkedIn Geo ID for India
 
         for job_title in self.search_terms:
-            job_encoded = quote_plus(job_title)
-            linkedin_url = f"{self.BASE_URL_jobs}{job_encoded}&geoId={india_geo_id}"
+            job_encoded = "&keywords=" + quote_plus(job_title)
 
+            if EarlyApp:
+                linkedin_url = f"{self.BASE_URL_JOBS}&f_EA=true{job_encoded}"
+            else:
+                linkedin_url = f"{self.BASE_URL_JOBS}{job_encoded}"
+            if geo_id:
+                linkedin_url += f"&geoId={geo_id}"
             if Exp_Level:
                 linkedin_url += f"&exp={quote_plus(Exp_Level)}"
 
@@ -40,37 +49,20 @@ class LinkedInScraper(JobScraper):
                 print(f"Error fetching {linkedin_url}: {e}")
                 continue
 
-            jobs_list = []
             soup = BeautifulSoup(response.text, "html.parser")
             jobs = soup.select("div.base-card")[:10]
 
-            for job in jobs:
-                title_tag = job.find("h3")
-                title = title_tag.get_text(strip=True) if title_tag else "No Title"
-                if "**" in title:
-                    title = "Position Name Hidden by LinkedIn (click to know more)"
-
-                company_tag = job.find("h4")
-                company = company_tag.get_text(strip=True) if company_tag else "Unknown Company"
-                if "**" in company:
-                    company = "Company Name Hidden"
-
-                location_tag = job.select_one("span.job-search-card__location")
-                location = location_tag.get_text(strip=True) if location_tag else "No Location"
-
-                time_tag = job.find("time")
-                posted_time = time_tag.get_text(strip=True) if time_tag else "Unknown Time"
-
-                link_tag = job.find("a")
-                link = link_tag["href"] if link_tag and link_tag.has_attr("href") else "No Link"
-
-                jobs_list.append({
-                    "title": title,
-                    "company": company,
-                    "location": location,
-                    "posted": posted_time,
-                    "link": link
-                })
+            jobs_list = [
+                {
+                    "title": job.find("h3").get_text(strip=True) if job.find("h3") else "No Title",
+                    "company": job.find("h4").get_text(strip=True) if job.find("h4") else "Unknown Company",
+                    "location": job.select_one("span.job-search-card__location").get_text(strip=True) if job.select_one(
+                        "span.job-search-card__location") else "No Location",
+                    "posted": job.find("time").get_text(strip=True) if job.find("time") else "Unknown Time",
+                    "link": job.find("a")["href"] if job.find("a") and job.find("a").has_attr("href") else "No Link",
+                }
+                for job in jobs
+            ]
 
             all_jobs.append({
                 "job_title": job_title,
@@ -82,71 +74,16 @@ class LinkedInScraper(JobScraper):
         return all_jobs
 
     def fetch_jobs_OutsideIndia(self, Exp_Level=None):
-        """Scrape LinkedIn job postings only in India."""
-        all_jobs = []
-        session = requests.Session()
+        """Fetch LinkedIn job postings outside India."""
+        return self.fetch_jobs(Exp_Level, geo_id=None)
 
-        for job_title in self.search_terms:
-            job_encoded = quote_plus(job_title)
-            linkedin_url = f"{self.BASE_URL_jobs}{job_encoded}"
+    def fetch_jobs_for_Early_Applicants(self):
+        return self.fetch_jobs(Exp_Level=None, geo_id=None, EarlyApp=True)
 
-            if Exp_Level:
-                linkedin_url += f"&exp={quote_plus(Exp_Level)}"
-
-            try:
-                response = session.get(linkedin_url, headers=self.HEADERS, timeout=10)
-                response.raise_for_status()  # Handle HTTP errors
-            except requests.exceptions.RequestException as e:
-                print(f"Error fetching {linkedin_url}: {e}")
-                continue
-
-            jobs_list = []
-            soup = BeautifulSoup(response.text, "html.parser")
-            jobs = soup.select("div.base-card")[:10]
-
-            for job in jobs:
-                title_tag = job.find("h3")
-                title = title_tag.get_text(strip=True) if title_tag else "No Title"
-                if "**" in title:
-                    title = "Position Name Hidden by LinkedIn (click to know more)"
-
-                company_tag = job.find("h4")
-                company = company_tag.get_text(strip=True) if company_tag else "Unknown Company"
-                if "**" in company:
-                    company = "Company Name Hidden"
-
-                location_tag = job.select_one("span.job-search-card__location")
-                location = location_tag.get_text(strip=True) if location_tag else "No Location"
-
-                time_tag = job.find("time")
-                posted_time = time_tag.get_text(strip=True) if time_tag else "Unknown Time"
-
-                link_tag = job.find("a")
-                link = link_tag["href"] if link_tag and link_tag.has_attr("href") else "No Link"
-
-                jobs_list.append({
-                    "title": title,
-                    "company": company,
-                    "location": location,
-                    "posted": posted_time,
-                    "link": link
-                })
-
-            all_jobs.append({
-                "job_title": job_title,
-                "source": "LinkedIn",
-                "jobs": jobs_list,
-                "apply_link": linkedin_url
-            })
-
-        return all_jobs
-
-
-
-
-    def fetch_people(self, Exp_Level=""):
+    def fetch_people(self):
         """Scrape LinkedIn People profiles with specific experience levels."""
         all_people = []
+        session = requests.Session()
 
         experience_levels = {
             "Internship": 1,
@@ -161,34 +98,37 @@ class LinkedInScraper(JobScraper):
             job_results = {"job_title": job_title, "people": []}
 
             for exp_level, exp_code in experience_levels.items():
-                linkedin_url = f"{self.BASE_URL_people}{job_title.replace(' ', '%20')}&f_E={exp_code}&origin=SWITCH_SEARCH_VERTICAL&sid=5GE"
-                response = requests.get(linkedin_url, headers=self.HEADERS)
+                linkedin_url = f"{self.BASE_URL_PEOPLE}{quote_plus(job_title)}&f_E={exp_code}&origin=SWITCH_SEARCH_VERTICAL"
 
-                people_list = []
-                if response.status_code == 200:
-                    soup = BeautifulSoup(response.text, "html.parser")
-                    people = soup.find_all("div", class_="reusable-search__entity-result")[:10]
+                try:
+                    response = session.get(linkedin_url, headers=self.HEADERS, timeout=10)
+                    response.raise_for_status()
+                except requests.exceptions.RequestException as e:
+                    print(f"Error fetching {linkedin_url}: {e}")
+                    continue
 
-                    for person in people:
-                        name = person.find("span", class_="entity-result__title-text").get_text(
-                            strip=True) if person.find("span", class_="entity-result__title-text") else "No Name"
-                        position = person.find("div", class_="entity-result__primary-subtitle").get_text(
+                soup = BeautifulSoup(response.text, "html.parser")
+                people = soup.find_all("div", class_="reusable-search__entity-result")[:10]
+
+                people_list = [
+                    {
+                        "name": person.find("span", class_="entity-result__title-text").get_text(
+                            strip=True) if person.find("span", class_="entity-result__title-text") else "No Name",
+                        "position": person.find("div", class_="entity-result__primary-subtitle").get_text(
                             strip=True) if person.find("div",
-                                                       class_="entity-result__primary-subtitle") else "No Position"
-                        location = person.find("div", class_="entity-result__secondary-subtitle").get_text(
+                                                       class_="entity-result__primary-subtitle") else "No Position",
+                        "location": person.find("div", class_="entity-result__secondary-subtitle").get_text(
                             strip=True) if person.find("div",
-                                                       class_="entity-result__secondary-subtitle") else "No Location"
-                        profile_link = person.find("a")["href"] if person.find("a") else "No Profile Link"
-
-                        people_list.append({
-                            "name": name,
-                            "position": position,
-                            "location": location,
-                            "profile_link": f"https://www.linkedin.com{profile_link}" if "linkedin.com" not in profile_link else profile_link
-                        })
+                                                       class_="entity-result__secondary-subtitle") else "No Location",
+                        "profile_link": f"https://www.linkedin.com{person.find('a')['href']}" if person.find(
+                            "a") and person.find("a").has_attr("href") else "No Profile Link"
+                    }
+                    for person in people
+                ]
 
                 job_results["people"].append(
-                    {"experience_level": exp_level, "profiles": people_list, "search_link": linkedin_url})
+                    {"experience_level": exp_level, "profiles": people_list, "search_link": linkedin_url}
+                )
 
             all_people.append(job_results)
 
@@ -197,5 +137,6 @@ class LinkedInScraper(JobScraper):
 
 class LinkedInSkillScraper(LinkedInScraper):
     """Scraper for LinkedIn jobs based on skills."""
+
     def __init__(self, skills):
         super().__init__(skills)
